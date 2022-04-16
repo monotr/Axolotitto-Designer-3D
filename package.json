@@ -1,0 +1,32 @@
+{
+  "name": "axolotitto-designer",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "3.1.x",
+    "bower": "latest"
+  },
+  "scripts": {
+    "postinstall": "./node_modules/bower/bin/bower install"
+  },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  },
+  "main": "index.html",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monotr/Axolotitto-Designer-3D.git"
+  },
+  "author": "monotr",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/monotr/Axolotitto-Designer-3D/issues"
+  },
+  "homepage": "https://github.com/monotr/Axolotitto-Designer-3D#readme",
+  "description": ""
+}
