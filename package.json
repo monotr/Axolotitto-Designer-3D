@@ -4,9 +4,10 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "tsc && node dist/server.js",
-    "build": "tsc",
-    "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/server.js\""
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "keywords": [
     "typescript",
