@@ -4,10 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "node ./dist/server.js",
+    "test": "echo tests"
   },
   "keywords": [
     "typescript",
