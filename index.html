@@ -62,9 +62,27 @@
 			};
 			let panelSettings, numAnimations;
 
-			const items = [
-				"copa", "capa"
+			const items_head = [
+				"copa_v1", "corona_v1", "corona_v2"
 			];
+			const items_neck = [
+				"capa_v1"
+			];
+			const items_feet = [
+				"teniss_v1"
+			];
+			const items_around = [
+				"cohetedoge_v1"
+			];
+			let selections = [
+				{ "_current": "" },
+				{ "_current": "" },
+				{ "_current": "" },
+				{ "_current": "" }
+			]
+			let objects = {};
+			let objects_originalMats = {};
+			let objects_otherMats = {};
 
 			init();
 			//load_model();
@@ -219,27 +237,96 @@
 
 				const panel = new GUI( { width: 310 } );
 
-				let items_list = {}
-				for (let i = 0; i < items.length; i++) {
-					items_list[items[i]] = function load_model() {
-							const loader = new GLTFLoader();
-							loader.load('models/gltf/'.concat(items[i], '.glb'), function (gltf) {
-	
-								model = gltf.scene;
-								scene.add(model);
-	
-								model.traverse(function (object) {
-	
-									if (object.isMesh) object.castShadow = true;
-	
-								});
-	
-							});
-						};
-					panel.add(items_list, items[i]);
-					
-				}
+				let items_list = {};
+				const all_items = [items_head, items_neck, items_feet, items_around];
+				for (let j = 0; j < all_items.length; j++) {
+					for (let i = 0; i < all_items[j].length; i++) {
+						const itemName = all_items[j][i].split('_')[0];
+						
+						items_list[all_items[j][i]] = function load_model() {
+								console.log(itemName);
+							
+								if (!objects[itemName]) {
 
+									const loadName = itemName.concat("_v1");
+									
+									const loader = new GLTFLoader();
+									let _loaded = loader.load('models/gltf/'.concat(loadName, '.glb'), function (gltf) {
+			
+										model = gltf.scene;
+										//console.log(selections[j]["_current"]);
+										scene.add(model);
+										selections[j]["_current"] = i;
+										model.traverse(function (object) {
+
+											if (object.isMesh) object.castShadow = true;
+
+											objects[itemName] = object;
+
+											objects_originalMats[itemName] = object.material;
+
+											if (object.material)
+												console.log(object.material.toJSON());
+
+										});
+									});
+									console.log(_loaded);
+								} else {
+									if (selections[j]["_current"] === i) {
+										objects[itemName].visible = false;
+										selections[j]["_current"] = -1;
+									} else {
+										objects[itemName].visible = true;
+										selections[j]["_current"] = i;
+										
+										if (all_items[j][i].includes("_v1")) {
+											objects[itemName].material = objects_originalMats[itemName];
+										} else {
+											loadMaterial(all_items[j][i], objects[itemName]);
+										}
+									}
+								}
+								animate();
+							};
+						panel.add(items_list, all_items[j][i]);
+					}
+				};
+
+			}
+
+			function loadMaterial( _name, _object ) {
+				if (objects_otherMats[_name]) {
+					_object.material = objects_otherMats[_name];
+				} else {
+					// instantiate a loader
+					const loader = new THREE.MaterialLoader();
+	
+					// load a resource
+					loader.load(
+						// resource URL
+						'models/materials/'.concat(_name, '.json'),
+	
+						// onLoad callback
+						function (material) {
+							_object.material = material;
+							objects_otherMats[_name] = material;
+							console.log(material);
+
+							console.log(loader)
+							loader.setTextures(loader.textures);
+						},
+	
+						// onProgress callback
+						function (xhr) {
+							console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+						},
+	
+						// onError callback
+						function (err) {
+							console.log('An error happened');
+						}
+					);
+				}
 			}
 
 			function activateAction( action ) {
@@ -248,110 +335,6 @@
 				const settings = baseActions[ clip.name ] || additiveActions[ clip.name ];
 				setWeight( action, settings.weight );
 				action.play();
-
-			}
-
-			function modifyTimeScale( speed ) {
-
-				mixer.timeScale = speed;
-
-			}
-
-			function prepareCrossFade( startAction, endAction, duration ) {
-
-				// If the current action is 'idle', execute the crossfade immediately;
-				// else wait until the current action has finished its current loop
-
-				if ( currentBaseAction === 'idle' || ! startAction || ! endAction ) {
-
-					executeCrossFade( startAction, endAction, duration );
-
-				} else {
-
-					synchronizeCrossFade( startAction, endAction, duration );
-
-				}
-
-				// Update control colors
-
-				if ( endAction ) {
-
-					const clip = endAction.getClip();
-					currentBaseAction = clip.name;
-
-				} else {
-
-					currentBaseAction = 'None';
-
-				}
-
-				crossFadeControls.forEach( function ( control ) {
-
-					const name = control.property;
-
-					if ( name === currentBaseAction ) {
-
-						control.setActive();
-
-					} else {
-
-						control.setInactive();
-
-					}
-
-				} );
-
-			}
-
-			function synchronizeCrossFade( startAction, endAction, duration ) {
-
-				mixer.addEventListener( 'loop', onLoopFinished );
-
-				function onLoopFinished( event ) {
-
-					if ( event.action === startAction ) {
-
-						mixer.removeEventListener( 'loop', onLoopFinished );
-
-						executeCrossFade( startAction, endAction, duration );
-
-					}
-
-				}
-
-			}
-
-			function executeCrossFade( startAction, endAction, duration ) {
-
-				// Not only the start action, but also the end action must get a weight of 1 before fading
-				// (concerning the start action this is already guaranteed in this place)
-
-				if ( endAction ) {
-
-					setWeight( endAction, 1 );
-					endAction.time = 0;
-
-					if ( startAction ) {
-
-						// Crossfade with warping
-
-						startAction.crossFadeTo( endAction, duration, true );
-
-					} else {
-
-						// Fade in
-
-						endAction.fadeIn( duration );
-
-					}
-
-				} else {
-
-					// Fade out
-
-					startAction.fadeOut( duration );
-
-				}
 
 			}
 
